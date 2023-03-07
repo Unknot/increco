@@ -1,6 +1,9 @@
 from river import optim
 from river import reco
 import csv
+import warnings
+warnings.filterwarnings("error")
+
 
 dataset = (
     ({'user': 'Alice', 'item': 'Superman'}, 8),
@@ -38,12 +41,20 @@ def main():
                 )
             # print(example)
             # return
-            model.learn_one(**example[0], y=example[1])
+            if example[1] < 1.:
+                print("Zero duration, skipping example.")
+                continue
+
+            try:
+                model.learn_one(**example[0], y=example[1])
+            except RuntimeWarning:
+                print(example)
 
     # for x, y in dataset:
     #     model.learn_one(**x, y=y)
 
     print(model.predict_one(user='Bob', item='Harry Potter'))
+    print(model.predict_one(user='Putin', item='Brokeback Mountain'))
 
 
 if __name__ == "__main__":
