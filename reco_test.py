@@ -24,6 +24,8 @@ def main():
         latent_initializer=optim.initializers.Normal(mu=0., sigma=0.1, seed=71)
     )
 
+    # Working with the 100k Twitch data from here:
+    # https://cseweb.ucsd.edu/~jmcauley/datasets.html
     with open("100k_a.csv", "r") as f:
         reader = csv.reader(f)
         data = list(reader)
