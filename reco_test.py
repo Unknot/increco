@@ -2,7 +2,6 @@ from river import optim
 from river import reco
 import csv
 
-
 dataset = (
     ({'user': 'Alice', 'item': 'Superman'}, 8),
     ({'user': 'Alice', 'item': 'Terminator'}, 9),
