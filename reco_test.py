@@ -36,13 +36,13 @@ def main():
     problematic_items = set()
 
     if filter_problematic:
-        with open("problematic_users.txt", "r") as f:
+        with open("./.data/problematic_users.txt", "r") as f:
             ser = f.read()
             problematic_users = \
                 set() if ser == str(set()) \
                 else ast.literal_eval(ser)
             print(f"Problematic users recovered: {len(problematic_users)}")
-        with open("problematic_items.txt", "r") as f:
+        with open("./.data/problematic_items.txt", "r") as f:
             ser = f.read()
             problematic_items = \
                 set() if ser == str(set()) \
@@ -51,7 +51,7 @@ def main():
 
     # Working with the 100k Twitch data from here:
     # https://cseweb.ucsd.edu/~jmcauley/datasets.html
-    with open("100k_a.csv", "r") as f:
+    with open("./.data/100k_a.csv", "r") as f:
         reader = csv.reader(f)
         data = list(reader)
         for data_point in data:
