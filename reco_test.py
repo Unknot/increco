@@ -3,6 +3,8 @@ from river import reco
 from river import metrics
 import csv
 import ast
+import math
+import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("error")
 
@@ -22,7 +24,7 @@ dataset = (
 filter_problematic = True
 
 
-def main():
+def twitch():
     model = reco.BiasedMF(
         n_factors=10,
         bias_optimizer=optim.SGD(0.025),
@@ -100,5 +102,62 @@ def main():
         f.write(str(problematic_items))
 
 
+def steam():
+    model = reco.BiasedMF(
+        n_factors=5,
+        bias_optimizer=optim.Adam(),
+        latent_optimizer=optim.Adam(),
+        latent_initializer=optim.initializers.Normal(mu=0., sigma=0.1, seed=71)
+    )
+
+    metric = metrics.MAE()
+    maes = []
+
+    with open("./.data/steam-200k.csv", "r") as f:
+        reader = csv.reader(f)
+        data = list(reader)
+        for idx, data_point in enumerate(data):
+            if data_point[2] == "purchase":
+                continue
+            example = (
+                {
+                    "user": data_point[0],
+                    "item": data_point[1],
+                },
+                float(data_point[3])
+            )
+
+            # if idx == 2390:
+            #     print(example)
+            #     print(metric)
+            #     print(maes)
+            #     return
+
+            # print(example)
+            # return
+            try:
+                if idx > 0:
+                    y_pred = model.predict_one(**example[0])
+                model.learn_one(**example[0], y=example[1])
+                if idx > 0:
+                    metric.update(example[1], y_pred)
+                maes.append(metric.get())
+                # print(metric)
+            except RuntimeWarning:
+                print(example)
+
+            if math.isnan(metric.get()) or math.isinf(metric.get()):
+                print(idx-1)
+                break
+
+            # if idx > 2388:
+            #     break
+
+    print(metric.get())
+    print(math.isnan(metric.get()))
+    plt.plot(maes)
+    plt.show()
+
+
 if __name__ == "__main__":
-    main()
+    steam()
