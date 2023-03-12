@@ -21,14 +21,14 @@ dataset = (
     ({'user': 'Bob', 'item': 'Notting Hill'}, 2)
 )
 
-filter_problematic = True
+filter_problematic = False
 
 
 def twitch():
     model = reco.BiasedMF(
         n_factors=10,
-        bias_optimizer=optim.SGD(0.025),
-        latent_optimizer=optim.SGD(0.025),
+        bias_optimizer=optim.Adam(),
+        latent_optimizer=optim.Adam(),
         latent_initializer=optim.initializers.Normal(mu=0., sigma=0.1, seed=71)
     )
 
@@ -105,8 +105,8 @@ def twitch():
 def steam():
     model = reco.BiasedMF(
         n_factors=5,
-        bias_optimizer=optim.Adam(),
-        latent_optimizer=optim.Adam(),
+        bias_optimizer=optim.Nadam(),
+        latent_optimizer=optim.Nadam(),
         latent_initializer=optim.initializers.Normal(mu=0., sigma=0.1, seed=71)
     )
 
@@ -160,4 +160,4 @@ def steam():
 
 
 if __name__ == "__main__":
-    steam()
+    twitch()
