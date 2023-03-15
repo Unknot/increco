@@ -5,7 +5,6 @@ from tqdm import tqdm
 import pickle
 import csv
 from flask import Flask, request
-import json
 
 
 class BiasedRecoModel:
@@ -32,6 +31,7 @@ class BiasedRecoModel:
     def load(self):
         with open("./.models/model.pkl", "rb") as f:
             self.model = pickle.load(f)
+        self.is_trained = True
 
 
 def load_training_data():
@@ -78,8 +78,9 @@ def load_model():
 @app.route("/predict", methods=["POST"])
 def predict():
     global model
-    # if not model.is_trained:
-    #     return "Model not trained. Train the model first or load a trained model."
+    if not model.is_trained:
+        return """Model not trained. Train the model first
+                 or load a trained model."""
     print(model.is_trained)
     prediction = model.model.predict_one(**dict(request.json))
     return f"Predicted score: {prediction}"
