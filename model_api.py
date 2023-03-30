@@ -4,7 +4,9 @@ from river import metrics
 from tqdm import tqdm
 import pickle
 import csv
+import pandas as pd
 from flask import Flask, request
+from sklearn.model_selection import train_test_split
 
 
 class BiasedRecoModel:
@@ -26,24 +28,55 @@ class BiasedRecoModel:
 
     def save(self):
         with open("./.models/model.pkl", "wb") as f:
-            pickle.dump(self.model, f)
+            pickle.dump(self, f)
 
-    def load(self):
+    @staticmethod
+    def load():
         with open("./.models/model.pkl", "rb") as f:
-            self.model = pickle.load(f)
-        self.is_trained = True
+            model = pickle.load(f)
+        return model
 
 
-def load_training_data():
+def process_steam_data():
     with open("./.data/steam-200k.csv", "r") as f:
         reader = csv.reader(f)
         data = list(reader)
-        training_data = [(
+        parsed_data = [(
             {"user": data_point[0],
              "item": data_point[1]},
             float(data_point[3]))
             for data_point in data if data_point[2] == "purchase"]
-    return training_data
+
+    agg_data = pd.DataFrame.from_records([x[0] for x in parsed_data]) \
+        .groupby("user") \
+        .agg({"item": len}) \
+        .reset_index()
+
+    train_users, test_users, _, _ = train_test_split(agg_data["user"],
+                                                     agg_data["item"],
+                                                     test_size=0.3)
+    # print(train_users)
+    train_data = [data for data in parsed_data
+                  if data[0]["user"] in list(train_users)]
+    test_data = [data for data in parsed_data
+                 if data[0]["user"] in list(test_users)]
+    print(f"Len train_data:  {len(train_data)}")
+    print(f"Len test_data:  {len(test_data)}")
+
+    with open("./.data/steam_train_data.pkl", "wb") as f:
+        pickle.dump(train_data, f)
+    with open("./.data/steam_test_data.pkl", "wb") as f:
+        pickle.dump(test_data, f)
+
+    return train_data, test_data
+
+
+def load_steam_data():
+    with open("./.data/steam_train_data.pkl", "rb") as f:
+        train_data = pickle.load(f)
+    with open("./.data/steam_test_data.pkl", "rb") as f:
+        test_data = pickle.load(f)
+    return train_data, test_data
 
 
 global model
@@ -60,7 +93,7 @@ def index():
 def train_model():
     print("Model training...")
     model = BiasedRecoModel(10)
-    training_data = load_training_data()
+    training_data, _ = load_steam_data()
     model.train(training_data)
     model.save()
     return "Model trained and saved."
@@ -70,8 +103,7 @@ def train_model():
 def load_model():
     print("Loading model...")
     global model
-    model = BiasedRecoModel(10)
-    model.load()
+    model = BiasedRecoModel.load()
     return "Model loaded"
 
 
@@ -87,8 +119,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    # m = BiasedRecoModel(10)
-    # training_data = load_training_data()
-    # m.train(training_data)
-    # m.save()
     app.run(debug=True, host='0.0.0.0')
