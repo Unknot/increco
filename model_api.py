@@ -36,6 +36,13 @@ class BiasedRecoModel:
             model = pickle.load(f)
         return model
 
+    def evaluate(self, data_set):
+        metric = metrics.MAE()
+        for x, y_true in data_set:
+            y_pred = self.model.predict_one(**x)
+            metric.update(y_true, y_pred)
+        return metric
+
 
 def process_steam_data():
     with open("./.data/steam-200k.csv", "r") as f:
@@ -113,9 +120,31 @@ def predict():
     if not model.is_trained:
         return """Model not trained. Train the model first
                  or load a trained model."""
-    print(model.is_trained)
+    # print(model.is_trained)
     prediction = model.model.predict_one(**dict(request.json))
     return f"Predicted score: {prediction}"
+
+
+@app.route("/evaluate", methods=["GET"])
+def evaluate():
+    global model
+    if not model.is_trained:
+        return """Model not trained. Train the model first
+                 or load a trained model."""
+    _, test_data = load_steam_data()
+    print(set(x[0]["user"] for i, x in enumerate(test_data) if i < 1000))
+    metric = model.evaluate(test_data)
+    return str(metric)
+
+
+@app.route("/rank", methods=["POST"])
+def rank():
+    global model
+    if not model.is_trained:
+        return """Model not trained. Train the model first
+                 or load a trained model."""
+    result = model.model.rank(**dict(request.json))
+    return f"Rank: {result}"
 
 
 if __name__ == "__main__":
